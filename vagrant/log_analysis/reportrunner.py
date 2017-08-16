@@ -13,10 +13,11 @@ class ReportRunner():
         '''Main method that runs various log analysis reports.'''
 
         queries = []
-        print_info = []
+        printInfo = []
 
         # Question 1
-        print_info.append(['What are the most popular three articles of all time?', ' views'])
+        printInfo.append(['Most popular three articles of all time?',
+                          ' views'])
         queries.append('''
             select a.title, count(a.title)
             from articles as a
@@ -25,9 +26,10 @@ class ReportRunner():
             order by count(a.title) desc
             limit 3
         ''')
-        
+
         # Question 2
-        print_info.append(['Who are the most popular article authors of all time?', ' views'])
+        printInfo.append(['Most popular article authors of all time?',
+                          ' views'])
         queries.append('''
             select au.name, count(au.name)
             from articles as ar
@@ -36,18 +38,22 @@ class ReportRunner():
             group by au.name
             order by count(au.name) desc
         ''')
-        
+
         # Question 3
-        print_info.append(['On which days did more than 1% of requests lead to errors?', '% errors'])
+        printInfo.append(['Days with more than 1% of requests having errors?',
+                          '% errors'])
         queries.append('''
-            select totals.Date, to_char((errors.Total / totals.Total) * 100, 'FM999.0')
+            select totals.Date,
+                   to_char((errors.Total / totals.Total) * 100, 'FM999.0')
             from
-            (select to_char(time, 'Mon DD, YYYY') as Date, cast(count(1) as decimal) as Total
+            (select to_char(time, 'Mon DD, YYYY') as Date,
+                    cast(count(1) as decimal) as Total
              from log
              where status like '4%' or status like '5%'
              group by Date) as errors
             inner join
-            (select to_char(time, 'Mon DD, YYYY') as Date, cast(count(1) as decimal) as Total
+            (select to_char(time, 'Mon DD, YYYY') as Date,
+                    cast(count(1) as decimal) as Total
              from log
              group by Date) as totals
              on errors.Date = totals.Date
@@ -57,7 +63,7 @@ class ReportRunner():
         # Loop through the queries, get results, print
         for i in range(len(queries)):
             results = self.run_query(queries[i])
-            self.printer(print_info[i][0], print_info[i][1], results)
+            self.printer(printInfo[i][0], printInfo[i][1], results)
 
     def run_query(self, query):
         """Runs the given query and returns the results."""
