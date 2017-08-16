@@ -16,7 +16,7 @@ class ReportRunner():
         printInfo = []
 
         # Question 1
-        printInfo.append(['Most popular three articles of all time?',
+        printInfo.append(['Most popular three articles of all time',
                           ' views'])
         queries.append('''
             select a.title, count(a.title)
@@ -28,7 +28,7 @@ class ReportRunner():
         ''')
 
         # Question 2
-        printInfo.append(['Most popular article authors of all time?',
+        printInfo.append(['Most popular article authors of all time',
                           ' views'])
         queries.append('''
             select au.name, count(au.name)
@@ -40,7 +40,7 @@ class ReportRunner():
         ''')
 
         # Question 3
-        printInfo.append(['Days with more than 1% of requests having errors?',
+        printInfo.append(['Days with more than 1% of requests having errors',
                           '% errors'])
         queries.append('''
             select totals.Date,
