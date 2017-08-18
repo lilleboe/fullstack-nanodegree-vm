@@ -19,11 +19,14 @@ class ReportRunner():
         printInfo.append(['Most popular three articles of all time',
                           ' views'])
         queries.append('''
-            select a.title, count(a.title)
+            select a.title, total
             from articles as a
-                left join log as l on position(a.slug in l.path) > 0
-            group by a.title
-            order by count(a.title) desc
+                left join (select path, count(*) as total
+                           from log
+                           where status = '200 OK'
+                           group by path) as l
+                on position(a.slug in l.path) > 0
+            order by total desc
             limit 3
         ''')
 
@@ -31,10 +34,14 @@ class ReportRunner():
         printInfo.append(['Most popular article authors of all time',
                           ' views'])
         queries.append('''
-            select au.name, count(au.name)
+            select au.name, sum(total)
             from articles as ar
                 join authors as au on ar.author = au.id
-                left join log as l on position(ar.slug in l.path) > 0
+                left join (select path, count(*) as total
+                           from log
+                           where status = '200 OK'
+                           group by path) as l
+                on position(ar.slug in l.path) > 0
             group by au.name
             order by count(au.name) desc
         ''')
@@ -43,16 +50,16 @@ class ReportRunner():
         printInfo.append(['Days with more than 1% of requests having errors',
                           '% errors'])
         queries.append('''
-            select totals.Date,
+            select to_char(totals.Date, 'FMMonth FMDD, YYYY'),
                    to_char((errors.Total / totals.Total) * 100, 'FM999.0')
             from
-            (select to_char(time, 'Mon DD, YYYY') as Date,
+            (select Date(time) as Date,
                     cast(count(1) as decimal) as Total
              from log
              where status like '4%' or status like '5%'
              group by Date) as errors
             inner join
-            (select to_char(time, 'Mon DD, YYYY') as Date,
+            (select Date(time) as Date,
                     cast(count(1) as decimal) as Total
              from log
              group by Date) as totals
@@ -71,12 +78,21 @@ class ReportRunner():
         if not query:
             return None
 
-        db = psycopg2.connect(database=self.dbName)
-        c = db.cursor()
+        db, c = self.db_connect(self.dbName)
         c.execute(query)
         results = c.fetchall()
         db.close()
         return results
+
+    def db_connect(self, db_name):
+        """Connect to the PostgreSQL database.  Returns a database connection."""
+        try:
+            db = psycopg2.connect("dbname={}".format(db_name))
+            c = db.cursor()
+            return db, c
+        except psycopg2.Error as e:
+            print "Unable to connect to database"
+            sys.exit(1) # The easier method
 
     def printer(self, title, end, data):
         '''Produces a readable output'''
